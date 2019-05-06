@@ -32,6 +32,10 @@ class EchoServer extends Actor {
     catch{
       case n : NullPointerException => None
     }
+    out.write(in.readLine())
+    out.flush()
+    in.close()
+    out.close()
   }
 
   def read_all(arrayOfFirstLineStrings: Array[String], out: BufferedWriter): Unit = {
@@ -46,27 +50,24 @@ class EchoServer extends Actor {
           out.write(line)
           out.flush()
         }
-        out.close()
       } catch {
         case e: Exception => println(e.getMessage)
       }
     }
     else {
-      var fileName = url.substring(1)
-      if (!fileName.contains(".html")) {
+      var req_name = url.substring(1)
+      if (!req_name.contains(".html")) {
         val html = ".html"
-        fileName = fileName.concat(html)
-        System.out.println(fileName)
+        req_name = req_name.concat(html)
       }
       try {
         out.write("HTTP/1.1 200 OK \r\n")
-        out.write("\r\n")
-        for (line <- Source.fromFile(fileName).getLines) {
+        out.write("\r\n\n")
+        out.write("Content-Type: text/plain")
+        out.write("Connection: close")
+        for (line <- Source.fromFile(req_name).getLines) {
           out.write(line.toString)
-
         }
-        out.flush()
-        out.close()
       } catch {
         case noFile: FileNotFoundException => resourceNotFound(out)
         case e: Exception => println(e.getMessage)
@@ -78,12 +79,8 @@ class EchoServer extends Actor {
       out.write("HTTP/1.1 404 Resource Not Found \r\n")
       out.write("\r\n")
       out.write("Resource Not Found")
-      out.flush
+      out.flush()
     }
-    //out.write(in.readLine())
-    out.flush()
-    //in.close()
-    out.close()
   }
 
   def receive: PartialFunction[Any, Unit] = {
